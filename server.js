@@ -20,36 +20,42 @@ async function logDataToGoogleSheet(priceData, res) {
         const authClient = await auth.getClient();
         const sheets = google.sheets({ version: 'v4', auth: authClient });
 
-        console.log("Authenticated with Google Sheets API");
+        console.log("✅ Authenticated with Google Sheets API");
 
-        // Remove range and let Sheets decide where to append data
+        const range = "ArbitrageBotSheet!A2:C"; // FIX: Define the range explicitly
+        console.log("📝 Using range:", range);
+
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
+            range: range,
             valueInputOption: "RAW",
+            insertDataOption: "INSERT_ROWS", // Ensures data is appended correctly
             requestBody: {
                 values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
             }
         });
 
-        console.log("Data written to Google Sheets:", response.data.updates.updatedCells);
+        console.log("✅ Data written to Google Sheets:", response.data.updates.updatedCells);
         res.status(200).json({ message: "Data written to Google Sheets." });
     } catch (sheetsError) {
-        console.error("Failed to write data to Google Sheets:", sheetsError);
+        console.error("❌ Failed to write data to Google Sheets:", sheetsError);
         res.status(500).json({ error: "Failed to write data to Google Sheets.", details: sheetsError.message });
     }
 }
 
+// API endpoint to receive price data and log it to Google Sheets
 app.post('/log-price-data', (req, res) => {
     const priceData = req.body;
 
     if (!priceData.timestamp || !priceData.pricePancake || !priceData.priceBakery) {
+        console.log("❌ Invalid data received:", priceData);
         return res.status(400).json({ error: "Invalid data. Please provide timestamp, pricePancake, and priceBakery." });
     }
 
-    console.log("Received price data:", priceData);
+    console.log("📩 Received price data:", priceData);
     logDataToGoogleSheet(priceData, res);
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
