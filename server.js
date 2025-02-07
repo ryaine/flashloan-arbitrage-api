@@ -30,7 +30,7 @@ const auth = new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/spreadsheets"]
 });
 const sheets = google.sheets({ version: "v4", auth });
-const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE"; // Replace with your actual sheet ID
+const SPREADSHEET_ID = "1K7hglTFtXSb3KMJYlEyzZuoXURmj2X_DVaTpTfpqNBE"; // Replace with your actual sheet ID
 
 // 🔹 API: Fetch Token Prices & Log to Google Sheets
 app.get("/fetch-prices", async (req, res) => {
