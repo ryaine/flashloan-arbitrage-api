@@ -17,15 +17,10 @@ const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC));
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F";
 
-// ✅ BNB & BUSD Token Addresses
 // ✅ Convert addresses to checksum format
 function getChecksumAddress(address) {
     return web3.utils.toChecksumAddress(address); // Web3.js method for proper checksum
 }
-
-// ✅ Convert only valid Ethereum/BSC addresses
-const BNB_TOKEN = getChecksumAddress("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"); // Fixed BNB address
-const BUSD_TOKEN = getChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56");
 
 // ✅ Load ABIs from Environment Variables
 let pancakeRouter, bakeryRouter;
@@ -62,24 +57,24 @@ const auth = new google.auth.GoogleAuth({
 });
 
 // ✅ Fetch BNB Price from PancakeSwap & BakerySwap
-async function fetchPrices() {
+async function fetchPrices(tokenIn, tokenOut) {
     try {
         const amountIn = web3.utils.toWei("1", "ether"); // 1 BNB
 
         // 🥞 Fetch from PancakeSwap
         const pancakeAmounts = await pancakeRouter.methods
-            .getAmountsOut(amountIn, [BNB_TOKEN, BUSD_TOKEN])
+            .getAmountsOut(amountIn, [tokenIn, tokenOut])
             .call();
         const pricePancake = web3.utils.fromWei(pancakeAmounts[1], "ether");
 
         // 🥖 Fetch from BakerySwap
         const bakeryAmounts = await bakeryRouter.methods
-            .getAmountsOut(amountIn, [BNB_TOKEN, BUSD_TOKEN])
+            .getAmountsOut(amountIn, [tokenIn, tokenOut])
             .call();
         const priceBakery = web3.utils.fromWei(bakeryAmounts[1], "ether");
 
-        console.log(`🥞 PancakeSwap: ${pricePancake} BUSD`);
-        console.log(`🥖 BakerySwap: ${priceBakery} BUSD`);
+        console.log(`🥞 PancakeSwap: ${pricePancake} ${tokenOut}`);
+        console.log(`🥖 BakerySwap: ${priceBakery} ${tokenOut}`);
 
         return { pricePancake, priceBakery };
     } catch (error) {
@@ -89,14 +84,14 @@ async function fetchPrices() {
 }
 
 // ✅ Log Data to Google Sheets
-async function logDataToGoogleSheet(priceData, res) {
+async function logDataToGoogleSheet(priceData, tokenIn, tokenOut, res) {
     try {
         const authClient = await auth.getClient();
         const sheets = google.sheets({ version: 'v4', auth: authClient });
 
         const timestamp = new Date().toISOString();
 
-        const range = "Sheet1!A:C"; // Ensure this matches your sheet name
+        const range = "Sheet1!A:E"; // Ensure this matches your sheet name and columns
         console.log("📝 Using range:", range);
 
         const response = await sheets.spreadsheets.values.append({
@@ -105,7 +100,15 @@ async function logDataToGoogleSheet(priceData, res) {
             valueInputOption: "RAW",
             insertDataOption: "INSERT_ROWS",
             requestBody: {
-                values: [[timestamp, priceData.pricePancake, priceData.priceBakery]]
+                values: [
+                    [
+                        timestamp,
+                        tokenIn,
+                        tokenOut,
+                        priceData.pricePancake,
+                        priceData.priceBakery
+                    ]
+                ]
             }
         });
 
@@ -121,14 +124,20 @@ async function logDataToGoogleSheet(priceData, res) {
 // ✅ API Route to Fetch Prices & Log to Google Sheets
 app.post('/log-price-data', async (req, res) => {
     console.log("📩 Received request to fetch prices...");
-    
-    const priceData = await fetchPrices();
-    
+
+    const { tokenIn, tokenOut } = req.body; // Expecting tokenIn and tokenOut in the request body
+
+    if (!tokenIn || !tokenOut) {
+        return res.status(400).json({ error: "Missing tokenIn or tokenOut in the request body." });
+    }
+
+    const priceData = await fetchPrices(tokenIn, tokenOut);
+
     if (!priceData.pricePancake || !priceData.priceBakery) {
         return res.status(500).json({ error: "Failed to fetch prices." });
     }
 
-    await logDataToGoogleSheet(priceData, res);
+    await logDataToGoogleSheet(priceData, tokenIn, tokenOut, res);
 });
 
 // ✅ Start Server
