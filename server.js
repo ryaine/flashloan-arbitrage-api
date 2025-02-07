@@ -19,8 +19,10 @@ const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F";
 
 // ✅ BNB & BUSD Token Addresses
 // ✅ Convert addresses to checksum format
+const { ethers } = require("ethers");
+
 function getChecksumAddress(address) {
-    return web3.utils.isAddress(address) ? web3.utils.toChecksumAddress(address) : address;
+    return ethers.utils.getAddress(address); // Ethers.js method for proper checksum
 }
 
 // ✅ Convert only valid Ethereum/BSC addresses
