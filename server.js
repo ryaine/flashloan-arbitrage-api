@@ -50,6 +50,12 @@ try {
 
 // ✅ Google Sheets Setup
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
+
+if (!SPREADSHEET_ID) {
+    console.error("❌ Missing SPREADSHEET_ID environment variable.");
+    process.exit(1); // Stop execution if SPREADSHEET_ID is missing
+}
+
 const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -90,9 +96,12 @@ async function logDataToGoogleSheet(priceData, res) {
 
         const timestamp = new Date().toISOString();
 
+        const range = "Sheet1!A:C"; // Ensure this matches your sheet name
+        console.log("📝 Using range:", range);
+
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: "Sheet1!A:C",
+            range: range,
             valueInputOption: "RAW",
             insertDataOption: "INSERT_ROWS",
             requestBody: {
