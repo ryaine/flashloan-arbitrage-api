@@ -1,77 +1,58 @@
+const express = require('express');
+const { google } = require('googleapis');
+const bodyParser = require('body-parser');
 
-const express = require("express");
-const Web3 = require("web3");
-const cors = require("cors");
-const { google } = require("googleapis");
-const fs = require("fs");
-
+// Initialize Express app
 const app = express();
-app.use(express.json());
-app.use(cors());
+const PORT = process.env.PORT || 3000;
 
-// Connect to Binance Smart Chain
-const web3 = new Web3("https://bsc-dataseed.binance.org/");
+// Middleware to parse JSON requests
+app.use(bodyParser.json());
 
-// PancakeSwap & BakerySwap Routers
-const pancakeRouter = new web3.eth.Contract(
-    require("./PancakeSwapABI.json"),  // Ensure this file exists and is correct
-    "0x10ED43C718714eb63d5aA57B78B54704E256024E"
-);
+// Replace with your actual spreadsheet ID
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID';
 
-const bakeryRouter = new web3.eth.Contract(
-    require("./BakerySwapABI.json"),  // Ensure this file exists and is correct
-    "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F"
-);
-
-// Google Sheets Setup
+// Authentication setup
 const auth = new google.auth.GoogleAuth({
-    keyFile: "RevGoogleSheetAPI.json", // Ensure this file exists and is correct
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"]
+    keyFile: 'path/to/your/service-account-file.json', // Path to your service account key file
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
-const sheets = google.sheets({ version: "v4", auth });
-const SPREADSHEET_ID = "1K7hglTFtXSb3KMJYlEyzZuoXURmj2X_DVaTpTfpqNBE"; // Replace with your actual sheet ID
 
-// 🔹 API: Fetch Token Prices & Log to Google Sheets
-app.get("/fetch-prices", async (req, res) => {
+// Function to log data to Google Sheet
+async function logDataToGoogleSheet(priceData, res) {
     try {
-        const { tokenIn, tokenOut } = req.query;
-
-        if (!tokenIn || !tokenOut) {
-            return res.status(400).json({ error: "Missing tokenIn or tokenOut." });
-        }
-
-        const amountIn = web3.utils.toWei("1", "ether"); // Fetch price for 1 token
-
-        // Get Prices
-        const pricePancake = await pancakeRouter.methods.getAmountsOut(amountIn, [tokenIn, tokenOut]).call();
-        const priceBakery = await bakeryRouter.methods.getAmountsOut(amountIn, [tokenIn, tokenOut]).call();
-
-        const priceData = {
-            pricePancake: web3.utils.fromWei(pricePancake[1], "ether"),
-            priceBakery: web3.utils.fromWei(priceBakery[1], "ether"),
-            timestamp: new Date().toISOString()
-        };
-
-        console.log("Fetched Prices:", priceData);
-
-        // Save to Google Sheets
-        await sheets.spreadsheets.values.append({
+        const sheets = google.sheets({ version: 'v4', auth });
+        
+        const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: "ArbitrageBotSheet!A:C", // Column A: Timestamp, B: PancakeSwap Price, C: BakerySwap Price
+            range: "ArbitrageBotSheet!A:C",
             valueInputOption: "RAW",
-            requestBody: { values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]] }
+            requestBody: {
+                values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
+            }
         });
 
-        console.log("Data written to Google Sheets");
-
-        res.json(priceData);
-
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: error.toString() });
+        console.log("Data written to Google Sheets:", response.data.updates.updatedCells);
+        res.status(200).json({ message: "Data written to Google Sheets." });
+    } catch (sheetsError) {
+        console.error("Failed to write data to Google Sheets:", sheetsError);
+        res.status(500).json({ error: "Failed to write data to Google Sheets." });
     }
+}
+
+// Endpoint to receive price data and log it
+app.post('/log-price-data', (req, res) => {
+    const priceData = req.body; // Expecting JSON body with timestamp, pricePancake, priceBakery
+
+    // Validate input
+    if (!priceData.timestamp || !priceData.pricePancake || !priceData.priceBakery) {
+        return res.status(400).json({ error: "Invalid data. Please provide timestamp, pricePancake, and priceBakery." });
+    }
+
+    logDataToGoogleSheet(priceData, res);
 });
 
-// Start Server
-const PORT = 5000; // Hardcoded port since there's no .env file
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
