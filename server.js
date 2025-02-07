@@ -22,15 +22,17 @@ async function logDataToGoogleSheet(priceData, res) {
 
         console.log("Authenticated with Google Sheets API");
 
+        const range = "ArbitrageBotSheet!A:C"; // Update this if needed
+        console.log("Using range:", range);
+
         const response = await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: "ArbitrageBotSheet!A:C", // Append to the next available row
-    valueInputOption: "RAW",
-    requestBody: {
-        values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
-    }
-});
-        
+            spreadsheetId: SPREADSHEET_ID,
+            range: range,
+            valueInputOption: "RAW",
+            requestBody: {
+                values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
+            }
+        });
 
         console.log("Data written to Google Sheets:", response.data.updates.updatedCells);
         res.status(200).json({ message: "Data written to Google Sheets." });
