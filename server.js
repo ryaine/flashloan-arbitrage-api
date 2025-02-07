@@ -14,7 +14,7 @@ const SPREADSHEET_ID = '1K7hglTFtXSb3KMJYlEyzZuoXURmj2X_DVaTpTfpqNBE';
 
 // Authentication setup
 const auth = new google.auth.GoogleAuth({
-    keyFile: 'yourServiceAccountKey.json', // Path to your service account key file
+    keyFile: 'RevGoogleSheetAPI.json', // Path to your service account key file
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
