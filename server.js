@@ -17,11 +17,6 @@ const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC));
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F";
 
-// ✅ Convert addresses to checksum format
-function getChecksumAddress(address) {
-    return web3.utils.toChecksumAddress(address); // Web3.js method for proper checksum
-}
-
 // ✅ Load ABIs from Environment Variables
 let pancakeRouter, bakeryRouter;
 
@@ -61,15 +56,19 @@ async function fetchPrices(tokenIn, tokenOut) {
     try {
         const amountIn = web3.utils.toWei("1", "ether"); // 1 BNB
 
+        // Convert token addresses to checksum format
+        const checksumTokenIn = web3.utils.toChecksumAddress(tokenIn);
+        const checksumTokenOut = web3.utils.toChecksumAddress(tokenOut);
+
         // 🥞 Fetch from PancakeSwap
         const pancakeAmounts = await pancakeRouter.methods
-            .getAmountsOut(amountIn, [tokenIn, tokenOut])
+            .getAmountsOut(amountIn, [checksumTokenIn, checksumTokenOut])
             .call();
         const pricePancake = web3.utils.fromWei(pancakeAmounts[1], "ether");
 
         // 🥖 Fetch from BakerySwap
         const bakeryAmounts = await bakeryRouter.methods
-            .getAmountsOut(amountIn, [tokenIn, tokenOut])
+            .getAmountsOut(amountIn, [checksumTokenIn, checksumTokenOut])
             .call();
         const priceBakery = web3.utils.fromWei(bakeryAmounts[1], "ether");
 
@@ -129,6 +128,11 @@ app.post('/log-price-data', async (req, res) => {
 
     if (!tokenIn || !tokenOut) {
         return res.status(400).json({ error: "Missing tokenIn or tokenOut in the request body." });
+    }
+
+    // Validate token addresses
+    if (!web3.utils.isAddress(tokenIn) || !web3.utils.isAddress(tokenOut)) {
+        return res.status(400).json({ error: "Invalid tokenIn or tokenOut address." });
     }
 
     const priceData = await fetchPrices(tokenIn, tokenOut);
