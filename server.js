@@ -2,6 +2,7 @@ const express = require('express');
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
 const Web3 = require('web3');
+const fetch = require('node-fetch'); // Ensure this is installed
 
 // ✅ BSC Node Provider (Use Infura, QuickNode, or Public RPC)
 const BSC_RPC = "https://bsc-dataseed.binance.org/";
@@ -11,7 +12,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC));
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // Mainnet
 const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F"; // Mainnet
 
-// ✅ BUSD Token Address (Example: BNB/BUSD Pair)
+// ✅ BNB Token Address (Example: BNB/BUSD Pair)
 const BNB_TOKEN = "0xBB4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
 const BUSD_TOKEN = "0xe9e7cea3dedca5984780bafc599bd69add087d56"; 
 
@@ -26,23 +27,21 @@ const ROUTER_ABI = [
     }
 ];
 
-// ✅ Load ABIs from environment variables with checks
-let pancakeRouterABI, bakeryRouterABI;
-try {
-    pancakeRouterABI = process.env.PancakeSwap_ABI ? JSON.parse(process.env.PancakeSwap_ABI) : null;
-    bakeryRouterABI = process.env.BakerySwap_ABI ? JSON.parse(process.env.BakerySwap_ABI) : null;
+// ABI URLs for PancakeSwap and BakerySwap hosted on GitHub
+const PANCAKE_ABI_URL = 'https://raw.githubusercontent.com/ryaine/flashloan-arbitrage-api/main/PancakeSwapABI.json';
+const BAKERY_ABI_URL = 'https://raw.githubusercontent.com/ryaine/flashloan-arbitrage-api/main/BakerySwapABI.json';
 
-    if (!pancakeRouterABI || !bakeryRouterABI) {
-        console.error("❌ Missing or invalid ABI for PancakeSwap or BakerySwap.");
-        process.exit(1);  // Exit if ABIs are missing or invalid
+// Function to fetch ABI from GitHub URL
+async function fetchABI(url) {
+    try {
+        const response = await fetch(url);
+        const abi = await response.json();
+        return abi;
+    } catch (error) {
+        console.error('Failed to fetch ABI from GitHub:', error);
+        return null;
     }
-} catch (error) {
-    console.error("❌ Error parsing ABIs from environment variables:", error);
-    process.exit(1);  // Exit if there is an error parsing the ABIs
 }
-
-const pancakeRouter = new web3.eth.Contract(pancakeRouterABI, PANCAKE_ROUTER);
-const bakeryRouter = new web3.eth.Contract(bakeryRouterABI, BAKERY_ROUTER);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -114,6 +113,17 @@ async function logDataToGoogleSheet(priceData, res) {
 app.post('/log-price-data', async (req, res) => {
     console.log("📩 Received request to fetch prices...");
     
+    const pancakeABI = await fetchABI(PANCAKE_ABI_URL);
+    const bakeryABI = await fetchABI(BAKERY_ABI_URL);
+
+    if (!pancakeABI || !bakeryABI) {
+        return res.status(500).json({ error: "Failed to load ABIs from GitHub." });
+    }
+
+    // Initialize PancakeSwap and BakerySwap Router Contracts
+    const pancakeRouter = new web3.eth.Contract(pancakeABI, PANCAKE_ROUTER);
+    const bakeryRouter = new web3.eth.Contract(bakeryABI, BAKERY_ROUTER);
+
     const priceData = await fetchPrices();
     
     if (!priceData.pricePancake || !priceData.priceBakery) {
@@ -121,6 +131,11 @@ app.post('/log-price-data', async (req, res) => {
     }
 
     await logDataToGoogleSheet(priceData, res);
+});
+
+// ✅ Start Server
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
 // ✅ Start Server
