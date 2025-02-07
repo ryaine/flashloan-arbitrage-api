@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware to parse JSON requests
 app.use(bodyParser.json());
@@ -14,7 +14,7 @@ const SPREADSHEET_ID = '1K7hglTFtXSb3KMJYlEyzZuoXURmj2X_DVaTpTfpqNBE';
 
 // Authentication setup
 const auth = new google.auth.GoogleAuth({
-    keyFile: 'path/to/your/service-account-file.json', // Path to your service account key file
+    keyFile: 'yourServiceAccountKey.json', // Path to your service account key file
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
@@ -22,10 +22,14 @@ const auth = new google.auth.GoogleAuth({
 async function logDataToGoogleSheet(priceData, res) {
     try {
         const sheets = google.sheets({ version: 'v4', auth });
-        
+
+        // Log received data for debugging
+        console.log("Received price data:", priceData);
+
+        // Append data to Google Sheets
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: "ArbitrageBotSheet!A:C",
+            range: "ArbitrageBotSheet!A:C", // Ensure this sheet name matches exactly
             valueInputOption: "RAW",
             requestBody: {
                 values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
@@ -35,7 +39,7 @@ async function logDataToGoogleSheet(priceData, res) {
         console.log("Data written to Google Sheets:", response.data.updates.updatedCells);
         res.status(200).json({ message: "Data written to Google Sheets." });
     } catch (sheetsError) {
-        console.error("Failed to write data to Google Sheets:", sheetsError);
+        console.error("Failed to write data to Google Sheets:", sheetsError.response ? sheetsError.response.data : sheetsError);
         res.status(500).json({ error: "Failed to write data to Google Sheets." });
     }
 }
