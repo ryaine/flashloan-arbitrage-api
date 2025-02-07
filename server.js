@@ -9,8 +9,9 @@ app.use(bodyParser.json());
 
 const SPREADSHEET_ID = '1K7hglTFtXSb3KMJYlEyzZuoXURmj2X_DVaTpTfpqNBE';
 
+// Read credentials from environment variable
 const auth = new google.auth.GoogleAuth({
-    keyFile: 'RevGoogleSheetAPI.json',
+    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
