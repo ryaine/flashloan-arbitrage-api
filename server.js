@@ -19,8 +19,13 @@ const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F";
 
 // ✅ BNB & BUSD Token Addresses
 // ✅ Convert addresses to checksum format
-const BNB_TOKEN = web3.utils.toChecksumAddress("0xbb4cdb9cb36b01bd1cbaebf2de08d9173bc095c");
-const BUSD_TOKEN = web3.utils.toChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56");
+function getChecksumAddress(address) {
+    return web3.utils.isAddress(address) ? web3.utils.toChecksumAddress(address) : address;
+}
+
+// ✅ Convert only valid Ethereum/BSC addresses
+const BNB_TOKEN = getChecksumAddress("0xbb4cdb9cb36b01bd1cbaebf2de08d9173bc095c");
+const BUSD_TOKEN = getChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56");
 
 
 // ✅ Load ABIs from Environment Variables
