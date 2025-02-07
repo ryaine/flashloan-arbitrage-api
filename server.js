@@ -11,13 +11,9 @@ const web3 = new Web3(new Web3.providers.HttpProvider(BSC_RPC));
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // Mainnet
 const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F"; // Mainnet
 
-// ✅ BNB Token and BUSD Token Address (Example: BNB/BUSD Pair)
+// ✅ BUSD Token Address (Example: BNB/BUSD Pair)
 const BNB_TOKEN = "0xBB4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
 const BUSD_TOKEN = "0xe9e7cea3dedca5984780bafc599bd69add087d56"; 
-
-// ✅ Fetch the ABI for PancakeSwap and BakerySwap from environment variables
-const pancakeRouterABI = JSON.parse(process.env.PancakeSwap_ABI);  // Set this environment variable in your server
-const bakeryRouterABI = JSON.parse(process.env.BakerySwap_ABI);  // Set this environment variable in your server
 
 // ✅ ABI for `getAmountsOut` (Minimal ERC20 ABI for price fetching)
 const ROUTER_ABI = [
@@ -29,6 +25,21 @@ const ROUTER_ABI = [
         "type": "function"
     }
 ];
+
+// ✅ Load ABIs from environment variables with checks
+let pancakeRouterABI, bakeryRouterABI;
+try {
+    pancakeRouterABI = process.env.PancakeSwap_ABI ? JSON.parse(process.env.PancakeSwap_ABI) : null;
+    bakeryRouterABI = process.env.BakerySwap_ABI ? JSON.parse(process.env.BakerySwap_ABI) : null;
+
+    if (!pancakeRouterABI || !bakeryRouterABI) {
+        console.error("❌ Missing or invalid ABI for PancakeSwap or BakerySwap.");
+        process.exit(1);  // Exit if ABIs are missing or invalid
+    }
+} catch (error) {
+    console.error("❌ Error parsing ABIs from environment variables:", error);
+    process.exit(1);  // Exit if there is an error parsing the ABIs
+}
 
 const pancakeRouter = new web3.eth.Contract(pancakeRouterABI, PANCAKE_ROUTER);
 const bakeryRouter = new web3.eth.Contract(bakeryRouterABI, BAKERY_ROUTER);
