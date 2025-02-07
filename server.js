@@ -24,7 +24,7 @@ async function logDataToGoogleSheet(priceData, res) {
 
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: "ArbitrageBotSheet!A:C",
+            range: "ArbitrageBotSheet!A2:C", // Start from row 2, column A to C
             valueInputOption: "RAW",
             requestBody: {
                 values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
