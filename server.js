@@ -2,6 +2,9 @@ const express = require('express');
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
 const Web3 = require('web3');
+const pancakeRouterABI = JSON.parse(process.env.PancakeSwap_ABI);
+const bakeryRouterABI = JSON.parse(process.env.BakerySwap_ABI);
+
 
 // ✅ BSC Node Provider (Use Infura, QuickNode, or Public RPC)
 const BSC_RPC = "https://bsc-dataseed.binance.org/";
