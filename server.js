@@ -18,8 +18,10 @@ const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 const BAKERY_ROUTER = "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F";
 
 // ✅ BNB & BUSD Token Addresses
-const BNB_TOKEN = "0xBB4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
-const BUSD_TOKEN = "0xe9e7cea3dedca5984780bafc599bd69add087d56"; 
+// ✅ Convert addresses to checksum format
+const BNB_TOKEN = web3.utils.toChecksumAddress("0xbb4cdb9cb36b01bd1cbaebf2de08d9173bc095c");
+const BUSD_TOKEN = web3.utils.toChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56");
+
 
 // ✅ Load ABIs from Environment Variables
 let pancakeRouter, bakeryRouter;
