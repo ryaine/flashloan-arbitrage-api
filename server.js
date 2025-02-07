@@ -1,4 +1,3 @@
-require("dotenv").config();
 const express = require("express");
 const Web3 = require("web3");
 const cors = require("cors");
@@ -14,19 +13,18 @@ const web3 = new Web3("https://bsc-dataseed.binance.org/");
 
 // PancakeSwap & BakerySwap Routers
 const pancakeRouter = new web3.eth.Contract(
-    require("./PancakeSwapABI.json"),  // Update to correct filename
+    require("./PancakeSwapABI.json"),  // Ensure this file exists and is correct
     "0x10ED43C718714eb63d5aA57B78B54704E256024E"
 );
 
 const bakeryRouter = new web3.eth.Contract(
-    require("./BakerySwapABI.json"),  // Update to correct filename
+    require("./BakerySwapABI.json"),  // Ensure this file exists and is correct
     "0xCDe540d7eAFE93aC5fE6233Bee57E1270D3E330F"
 );
 
-
 // Google Sheets Setup
 const auth = new google.auth.GoogleAuth({
-    keyFile: "RevGoogleSheetAPI.json", // Ensure this file is in your project
+    keyFile: "RevGoogleSheetAPI.json", // Ensure this file exists and is correct
     scopes: ["https://www.googleapis.com/auth/spreadsheets"]
 });
 const sheets = google.sheets({ version: "v4", auth });
@@ -53,6 +51,8 @@ app.get("/fetch-prices", async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
+        console.log("Fetched Prices:", priceData);
+
         // Save to Google Sheets
         await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
@@ -61,13 +61,16 @@ app.get("/fetch-prices", async (req, res) => {
             requestBody: { values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]] }
         });
 
+        console.log("Data written to Google Sheets");
+
         res.json(priceData);
 
     } catch (error) {
+        console.error("Error:", error);
         res.status(500).json({ error: error.toString() });
     }
 });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = 5000; // Hardcoded port since there's no .env file
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
