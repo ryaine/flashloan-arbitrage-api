@@ -1,0 +1,16 @@
+{
+  "name": "flashloan-arbitrage-api",
+  "version": "1.0.0",
+  "description": "A flashloan arbitrage bot fetching token prices and logging to Google Sheets",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "googleapis": "^118.0.0",
+    "web3": "^1.10.0"
+  }
+}
