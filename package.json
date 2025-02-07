@@ -12,6 +12,6 @@
     "googleapis": "^120.0.0",
     "body-parser": "^1.20.2",
     "web3": "^1.10.0",
-    "ethers": "^6.7.1" // Add this line
+    "ethers": "^6.7.1" 
   }
 }
