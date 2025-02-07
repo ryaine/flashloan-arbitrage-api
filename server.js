@@ -17,25 +17,21 @@ const auth = new google.auth.GoogleAuth({
 
 async function logDataToGoogleSheet(priceData, res) {
     try {
-        console.log("Attempting to authenticate with Google Sheets API...");
         const authClient = await auth.getClient();
         const sheets = google.sheets({ version: 'v4', auth: authClient });
 
         console.log("Authenticated with Google Sheets API");
 
-        const range = "ArbitrageBotSheet!A:C"; // Update this if needed
-        console.log("Using range:", range);
-
+        // Remove range and let Sheets decide where to append data
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: range,
             valueInputOption: "RAW",
             requestBody: {
                 values: [[priceData.timestamp, priceData.pricePancake, priceData.priceBakery]]
             }
         });
 
-        console.log("Data written to Google Sheets. Updated cells:", response.data.updates.updatedCells);
+        console.log("Data written to Google Sheets:", response.data.updates.updatedCells);
         res.status(200).json({ message: "Data written to Google Sheets." });
     } catch (sheetsError) {
         console.error("Failed to write data to Google Sheets:", sheetsError);
@@ -44,17 +40,13 @@ async function logDataToGoogleSheet(priceData, res) {
 }
 
 app.post('/log-price-data', (req, res) => {
-    console.log("Received POST request at /log-price-data...");
-    
     const priceData = req.body;
-    console.log("Request body received:", priceData);
 
     if (!priceData.timestamp || !priceData.pricePancake || !priceData.priceBakery) {
-        console.log("Invalid data: Missing required fields.");
         return res.status(400).json({ error: "Invalid data. Please provide timestamp, pricePancake, and priceBakery." });
     }
 
-    console.log("Valid data received. Calling logDataToGoogleSheet...");
+    console.log("Received price data:", priceData);
     logDataToGoogleSheet(priceData, res);
 });
 
