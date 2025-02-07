@@ -7,14 +7,16 @@ const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.json());
 
+// Replace with your actual spreadsheet ID
 const SPREADSHEET_ID = '1K7hglTFtXSb3KMJYlEyzZuoXURmj2X_DVaTpTfpqNBE';
 
 // Read credentials from environment variable
 const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS), // Ensure this is set in Render.com
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
+// Function to log data to Google Sheet
 async function logDataToGoogleSheet(priceData, res) {
     try {
         const authClient = await auth.getClient();
@@ -22,9 +24,11 @@ async function logDataToGoogleSheet(priceData, res) {
 
         console.log("✅ Authenticated with Google Sheets API");
 
-        const range = "ArbitrageBotSheet!A2:C"; // FIX: Define the range explicitly
+        // Define the range explicitly
+        const range = "ArbitrageBotSheet!A2:C"; // Ensure this matches your sheet name and range
         console.log("📝 Using range:", range);
 
+        // Append data to Google Sheets
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
             range: range,
@@ -47,6 +51,7 @@ async function logDataToGoogleSheet(priceData, res) {
 app.post('/log-price-data', (req, res) => {
     const priceData = req.body;
 
+    // Validate input
     if (!priceData.timestamp || !priceData.pricePancake || !priceData.priceBakery) {
         console.log("❌ Invalid data received:", priceData);
         return res.status(400).json({ error: "Invalid data. Please provide timestamp, pricePancake, and priceBakery." });
@@ -56,6 +61,7 @@ app.post('/log-price-data', (req, res) => {
     logDataToGoogleSheet(priceData, res);
 });
 
+// Start the server
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
