@@ -26,9 +26,8 @@ function getChecksumAddress(address) {
 }
 
 // ✅ Convert only valid Ethereum/BSC addresses
-const BNB_TOKEN = getChecksumAddress("0xbb4cdb9cb36b01bd1cbaebf2de08d9173bc095c");
+const BNB_TOKEN = getChecksumAddress("0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"); // Fixed BNB address
 const BUSD_TOKEN = getChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56");
-
 
 // ✅ Load ABIs from Environment Variables
 let pancakeRouter, bakeryRouter;
@@ -129,4 +128,3 @@ app.post('/log-price-data', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
-
